@@ -2,6 +2,27 @@
 
 > Typed zero-dependency in-process event bus with wildcards, priority ordering, and async emit.
 
+## What it is
+It's is purely in-process and in-memory:
+
+- No I/O - nothing touches the network, disk, or any external system
+- No persistence - listeners and events live only for the lifetime of the HermesEmitter instance; everything is gone when the instance is GC'd or the process exits
+- No cross-process communication - two separate Node.js processes (or two browser tabs) each get their own isolated bus; emitting in one has zero effect on the other
+- No serialization - payloads are passed as live JavaScript object references, never stringified
+
+## What it's good for
+
+- Decoupling modules within a single Node.js process (or browser page)
+- Replacing direct function calls / callbacks with a pub/sub pattern
+- Framework-style plugin hooks (priority ordering makes this especially useful)
+
+## What it's NOT
+
+A message broker (no Redis, RabbitMQ, etc.)
+A WebSocket event system
+A cross-tab/cross-worker bus
+A durable event queue
+
 [![npm](https://img.shields.io/npm/v/@ekaone/hermes)](https://www.npmjs.com/package/@ekaone/hermes)
 [![license](https://img.shields.io/npm/l/@ekaone/hermes)](./LICENSE)
 
@@ -32,17 +53,17 @@ type AppEvents = {
 
 const bus = new HermesEmitter<AppEvents>();
 
-// Typed listener — payload is inferred as { id: string; name: string }
+// Typed listener - payload is inferred as { id: string; name: string }
 bus.on("user.created", (user) => {
   console.log("User created:", user.name);
 });
 
-// Wildcard listener — catches all user.* events
+// Wildcard listener - catches all user.* events
 bus.on("user.*", (payload) => {
   console.log("User event:", payload);
 });
 
-// Emit — type-checked at the call site
+// Emit - type-checked at the call site
 bus.emit("user.created", { id: "1", name: "Alice" });
 ```
 
@@ -65,7 +86,7 @@ bus.on("order.placed", handler, { priority: 10 });
 
 ### `once(event, listener, options?)`
 
-Single-fire subscription. The listener is automatically removed after its first invocation — regardless of which matching event triggered it.
+Single-fire subscription. The listener is automatically removed after its first invocation - regardless of which matching event triggered it.
 
 ```typescript
 bus.once("user.created", (user) => {
@@ -75,7 +96,7 @@ bus.once("user.created", (user) => {
 
 ### `off(event, listener)`
 
-Remove a specific listener. Uses **exact pattern string equality** — the event string must match exactly what was passed to `on` / `once`.
+Remove a specific listener. Uses **exact pattern string equality** - the event string must match exactly what was passed to `on` / `once`.
 
 ```typescript
 const handler = (user: { id: string; name: string }) => { /* ... */ };
@@ -95,7 +116,7 @@ bus.clear("user.*");        // removes all listeners for the "user.*" pattern bu
 bus.clear();                // removes everything
 ```
 
-`clear` uses exact key matching — `clear("user.*")` does **not** clear `user.created`.
+`clear` uses exact key matching - `clear("user.*")` does **not** clear `user.created`.
 
 ### `emit(event, payload)`
 
@@ -125,7 +146,7 @@ const fns = bus.listeners("user.created");
 
 ### `eventNames()`
 
-Returns all registered event keys **verbatim** — wildcard patterns are returned as-is.
+Returns all registered event keys **verbatim** - wildcard patterns are returned as-is.
 
 ```typescript
 bus.on("user.*", handler);
@@ -147,7 +168,7 @@ Hermes supports single-segment wildcards using `*`.
 
 `**` (multi-segment glob) is planned for v0.2.0.
 
-Wildcards work in `on`, `once`, and `off`. All use **exact pattern string equality** — `off("user.*", fn)` only removes listeners registered under `"user.*"`, not those under `"user.created"`.
+Wildcards work in `on`, `once`, and `off`. All use **exact pattern string equality** - `off("user.*", fn)` only removes listeners registered under `"user.*"`, not those under `"user.created"`.
 
 ```typescript
 const handler = (payload: unknown) => { /* ... */ };
@@ -196,15 +217,15 @@ type AppEvents = {
 
 const bus = new HermesEmitter<AppEvents>();
 
-// Fully typed — IDE infers payload as { id: string; name: string }
+// Fully typed - IDE infers payload as { id: string; name: string }
 bus.on("user.created", (user) => {
   console.log(user.name); // ✓ typed
   console.log(user.total); // ✗ TypeScript error
 });
 
-// Wildcard — payload is unknown (pattern not in EventMap)
+// Wildcard - payload is unknown (pattern not in EventMap)
 bus.on("user.*", (payload) => {
-  console.log(payload); // unknown — narrow as needed
+  console.log(payload); // unknown - narrow as needed
 });
 
 // Emit is type-checked
