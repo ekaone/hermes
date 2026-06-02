@@ -21,7 +21,7 @@ export class HermesEmitter<TMap extends EventMap = EventMap> {
   on<K extends keyof TMap & string>(event: K, listener: Listener<TMap[K]>, options?: ListenerOptions): this;
   // Overload 2: wildcard pattern or any string — payload is unknown
   on(event: string, listener: Listener<unknown>, options?: ListenerOptions): this;
-  on(event: string, listener: Listener<unknown>, options?: ListenerOptions): this {
+  on(event: string, listener: Listener<any>, options?: ListenerOptions): this {
     this._guard(event);
     const bucket = this._listeners.get(event) ?? [];
     bucket.push({ listener, priority: options?.priority ?? 0, once: false });
@@ -31,7 +31,7 @@ export class HermesEmitter<TMap extends EventMap = EventMap> {
 
   once<K extends keyof TMap & string>(event: K, listener: Listener<TMap[K]>, options?: ListenerOptions): this;
   once(event: string, listener: Listener<unknown>, options?: ListenerOptions): this;
-  once(event: string, listener: Listener<unknown>, options?: ListenerOptions): this {
+  once(event: string, listener: Listener<any>, options?: ListenerOptions): this {
     this._guard(event);
     const bucket = this._listeners.get(event) ?? [];
     bucket.push({ listener, priority: options?.priority ?? 0, once: true });
@@ -41,7 +41,7 @@ export class HermesEmitter<TMap extends EventMap = EventMap> {
 
   off<K extends keyof TMap & string>(event: K, listener: Listener<TMap[K]>): this;
   off(event: string, listener: Listener<unknown>): this;
-  off(event: string, listener: Listener<unknown>): this {
+  off(event: string, listener: Listener<any>): this {
     this._guard(event);
     const bucket = this._listeners.get(event);
     if (bucket === undefined) return this;
